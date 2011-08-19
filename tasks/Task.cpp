@@ -119,8 +119,9 @@ void Task::stopHook()
     TaskBase::stopHook();
 }
 
-// void Task::cleanupHook()
-// {
-//     TaskBase::cleanupHook();
-// }
+void Task::cleanupHook()
+{
+    TaskBase::cleanupHook();
+    mDriver->close();
+}
 
