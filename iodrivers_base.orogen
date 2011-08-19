@@ -1,0 +1,42 @@
+name "iodrivers_base"
+# Optionally declare the version number
+# version "0.1"
+
+using_library "iodrivers_base", :typekit => false
+import_types_from "base"
+import_types_from "iodrivers_base/Status.hpp"
+import_types_from "RawPacket.hpp"
+
+task_context "Task" do
+    doc "base task for integration of device drivers based on iodrivers_base::Driver. It is not meant to be used directly, but as a base class for driver tasks."
+
+    property "io_device", "/std/string", "the device address. It can either be serial://PATH[:baudrate], udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if you mean to use the in_raw and out_raw ports."
+    property("io_write_timeout", "/base/Time").
+        doc("the timeout on write. Defaults to one second")
+    property("io_read_timeout", "/base/Time").
+        doc("the timeout on read. Defaults to one second")
+    property("io_status_interval", "/base/Time").
+        doc("the interval at which the status port should be written. Defaults to one second")
+
+    input_port("io_raw_in", "iodrivers_base/RawPacket").
+        doc "if connected, data will be received through this port instead of using a file descriptor"
+    output_port("io_raw_out", "iodrivers_base/RawPacket").
+        doc "if connected, data will be sent through port instead of using a file descriptor"
+    output_port("io_status", "iodrivers_base/Status").
+        doc "statistics and status about the I/O channel"
+
+    port_driven "io_raw_in"
+    fd_driven
+end
+
+
+# Declares a deployment, i.e. an actual executable that contains various tasks.
+deployment "iodrivers_base_test" do
+    # This is a test deployment that should not be installed
+    do_not_install
+
+    # Declares it as periodic, with a period of 100ms
+    task("iodrivers_base", "Task").
+        periodic(0.1)
+end
+
