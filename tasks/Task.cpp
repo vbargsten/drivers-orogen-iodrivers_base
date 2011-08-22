@@ -14,9 +14,9 @@ Task::Task(std::string const& name)
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
     : TaskBase(name, engine)
 {
-    _io_write_timeout.write(base::Time::fromSeconds(1));
-    _io_read_timeout.write(base::Time::fromSeconds(1));
-    _io_status_interval.write(base::Time::fromSeconds(1));
+    _io_write_timeout.set(base::Time::fromSeconds(1));
+    _io_read_timeout.set(base::Time::fromSeconds(1));
+    _io_status_interval.set(base::Time::fromSeconds(1));
 }
 
 Task::~Task()
@@ -56,22 +56,22 @@ bool Task::startHook()
             fd_activity->watch(mDriver->getFileDescriptor());
             fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds() / 1000);
         }
-        mDriver->setReadTimeout(_io_read_timeout.get().toMilliseconds());
-        mDriver->setWriteTimeout(_io_write_timeout.get().toMilliseconds());
+        mDriver->setReadTimeout(_io_read_timeout.get());
+        mDriver->setWriteTimeout(_io_write_timeout.get());
     }
     return true;
 }
 
 void Task::updateHook()
 {
-    mDriver->setOutBufferEnabled(_out_raw.connected() || !mDriver->isValid());
+    mDriver->setOutputBufferEnabled(_io_raw_out.connected() || !mDriver->isValid());
 
-    if (mDriver->isOutBufferEnabled() && mDriver->getOutBufferSize())
+    if (mDriver->isOutputBufferEnabled() && mDriver->getOutputBufferSize())
     {
         // Check if there is some data in the driver's output buffer. If it is
         // the case, then the user most likely forgot to call pushAllData() at
         // the end of his updateHook()
-        log(RTT::Warn) << "unwritten data is present in the driver's output buffer. Did you forget to call pushAllData() at the end of the updateHook() ?" << RTT::endlog();
+        log(RTT::Warning) << "unwritten data is present in the driver's output buffer. Did you forget to call pushAllData() at the end of the updateHook() ?" << RTT::endlog();
         pushAllData();
     }
 
@@ -79,18 +79,18 @@ void Task::updateHook()
 
     if (!mDriver->isValid())
     {
-        while (_raw_in.read(mRawPacket, false) == RTT::NewData)
-            mDriver->pushRawData(mRawPacket);
+        while (_io_raw_in.read(mRawPacket, false) == RTT::NewData)
+            mDriver->pushInputRaw(mRawPacket.data);
     }
 }
 
 void Task::pushAllData()
 {
-    if (_raw_out.connected())
+    if (_io_raw_out.connected())
     {
         mRawPacket.time = base::Time::now();
-        mDriver->flushOutBuffer(mRawPacket.data);
-        _out_raw.write(mRawPacket);
+        mDriver->pullOutputRaw(mRawPacket.data);
+        _io_raw_out.write(mRawPacket);
     }
 
     base::Time now = base::Time::now();

@@ -8,7 +8,7 @@ namespace iodrivers_base
 {
     struct RawPacket
     {
-        base::Time stamp;
+        base::Time time;
         std::vector<uint8_t> data;
     };
 }
