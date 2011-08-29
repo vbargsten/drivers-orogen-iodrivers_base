@@ -26,6 +26,8 @@ task_context "Task" do
     output_port("io_status", "iodrivers_base/Status").
         doc "statistics and status about the I/O channel"
 
+    exception_states :IO_TIMEOUT, :IO_ERROR
+
     port_driven "io_raw_in"
     fd_driven
 end
