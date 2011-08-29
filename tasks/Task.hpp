@@ -18,6 +18,12 @@ namespace iodrivers_base {
         base::Time mLastStatus;
         bool mHasIO;
 
+        /** Sets the driver object
+         *
+         * Must be called before the TaskBase::startHook method gets called
+         */
+        void setDriver(Driver* driver);
+
         /** Pushes all output data currently queued in the Driver class to the
          * _out_raw port if it is connected
          *

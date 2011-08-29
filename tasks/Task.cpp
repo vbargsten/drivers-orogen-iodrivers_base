@@ -27,6 +27,10 @@ Task::~Task()
 {
 }
 
+void Task::setDriver(Driver* driver)
+{
+    mDriver = driver;
+}
 
 bool Task::hasIO() const
 {
