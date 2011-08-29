@@ -8,6 +8,7 @@ using namespace iodrivers_base;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
+    , mHasIO(false)
 {
     _io_write_timeout.set(base::Time::fromSeconds(1));
     _io_read_timeout.set(base::Time::fromSeconds(1));
@@ -27,6 +28,10 @@ Task::~Task()
 }
 
 
+bool Task::hasIO() const
+{
+    return mHasIO;
+}
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See Task.hpp for more detailed
@@ -41,6 +46,7 @@ Task::~Task()
 
 bool Task::startHook()
 {
+    mHasIO = false;
     if (!mDriver)
     {
         log(RTT::Error) << "call setDriver(driver) before TaskBase::startHook()" << RTT::endlog();
@@ -57,7 +63,7 @@ bool Task::startHook()
         if (fd_activity)
         {
             fd_activity->watch(mDriver->getFileDescriptor());
-            fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds() / 1000);
+            fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
         }
         mDriver->setReadTimeout(_io_read_timeout.get());
         mDriver->setWriteTimeout(_io_write_timeout.get());
@@ -67,6 +73,7 @@ bool Task::startHook()
 
 void Task::updateHook()
 {
+    mHasIO = false;
     mDriver->setOutputBufferEnabled(_io_raw_out.connected() || !mDriver->isValid());
 
     if (mDriver->isOutputBufferEnabled() && mDriver->getOutputBufferSize())
@@ -80,11 +87,38 @@ void Task::updateHook()
 
     TaskBase::updateHook();
 
-    if (!mDriver->isValid())
+    if (mDriver->isValid())
+    {
+        RTT::extras::FileDescriptorActivity* fd_activity =
+            getActivity<RTT::extras::FileDescriptorActivity>();
+        if (fd_activity)
+        {
+            mHasIO = fd_activity->isUpdated(mDriver->getFileDescriptor());
+            if (fd_activity->hasError())
+                return exception(IO_ERROR);
+        }
+        else
+        {
+            std::cout << "activity: not a FDActivity" << std::endl;
+            mHasIO = true;
+        }
+    }
+    else
     {
         while (_io_raw_in.read(mRawPacket, false) == RTT::NewData)
+        {
+            std::cout << "got raw input" << std::endl;
+            mHasIO = true;
             mDriver->pushInputRaw(mRawPacket.data);
+        }
     }
+
+    if (mHasIO)
+        processIO();
+}
+
+void Task::processIO()
+{
 }
 
 void Task::pushAllData()
