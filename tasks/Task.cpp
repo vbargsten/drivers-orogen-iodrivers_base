@@ -9,6 +9,9 @@ using namespace iodrivers_base;
 Task::Task(std::string const& name)
     : TaskBase(name)
 {
+    _io_write_timeout.set(base::Time::fromSeconds(1));
+    _io_read_timeout.set(base::Time::fromSeconds(1));
+    _io_status_interval.set(base::Time::fromSeconds(1));
 }
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
