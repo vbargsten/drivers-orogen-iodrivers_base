@@ -3,12 +3,14 @@
 #include "Task.hpp"
 #include <iodrivers_base/Driver.hpp>
 #include <rtt/extras/FileDescriptorActivity.hpp>
+#include "PortStream.hpp"
 
 using namespace iodrivers_base;
 
+
 Task::Task(std::string const& name)
     : TaskBase(name)
-    , mHasIO(false)
+    , mDriver(0), mStream(0), mListener(new PortListener(_io_read_listener, _io_write_listener))
 {
     _io_write_timeout.set(base::Time::fromSeconds(1));
     _io_read_timeout.set(base::Time::fromSeconds(1));
@@ -17,6 +19,7 @@ Task::Task(std::string const& name)
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
     : TaskBase(name, engine)
+    , mDriver(0), mStream(0), mListener(new PortListener(_io_read_listener, _io_write_listener))
 {
     _io_write_timeout.set(base::Time::fromSeconds(1));
     _io_read_timeout.set(base::Time::fromSeconds(1));
@@ -25,32 +28,43 @@ Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
 
 Task::~Task()
 {
+    delete mListener;
 }
 
 void Task::setDriver(Driver* driver)
 {
+    if (mDriver && mListener)
+        mDriver->removeListener(mListener);
     mDriver = driver;
-}
-
-bool Task::hasIO() const
-{
-    return mHasIO;
+    mStream = 0;
 }
 
 /// The following lines are template definitions for the various state machine
 // hooks defined by Orocos::RTT. See Task.hpp for more detailed
 // documentation about them.
 
-// bool Task::configureHook()
-// {
-//     if (! TaskBase::configureHook())
-//         return false;
-//     return true;
-// }
+bool Task::configureHook()
+{
+    if (!_io_port.get().empty() && _io_raw_in.connected())
+        throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+
+    if (! TaskBase::configureHook())
+        return false;
+
+    if (mDriver && _io_raw_in.connected())
+    {
+        mStream = new PortStream(_io_raw_in, _io_raw_out);
+        mDriver->setMainStream(mStream);
+    }
+
+    return true;
+}
 
 bool Task::startHook()
 {
-    mHasIO = false;
+    if (!_io_port.get().empty() && _io_raw_in.connected())
+        throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+
     if (!mDriver)
     {
         log(RTT::Error) << "call setDriver(driver) before TaskBase::startHook()" << RTT::endlog();
@@ -60,8 +74,13 @@ bool Task::startHook()
     if (! TaskBase::startHook())
         return false;
 
-    if (mDriver->isValid())
+    mDriver->addListener(mListener);
+
+    if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
+        if (_io_raw_in.connected())
+            throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+
         RTT::extras::FileDescriptorActivity* fd_activity =
             getActivity<RTT::extras::FileDescriptorActivity>();
         if (fd_activity)
@@ -72,74 +91,47 @@ bool Task::startHook()
         mDriver->setReadTimeout(_io_read_timeout.get());
         mDriver->setWriteTimeout(_io_write_timeout.get());
     }
+    else if (_io_raw_in.connected() && !mStream)
+    {
+        mStream = new PortStream(_io_raw_in, _io_raw_out);
+        mDriver->setMainStream(mStream);
+    }
     return true;
+}
+
+bool Task::hasIO()
+{
+    if (mDriver->getFileDescriptor() == Driver::INVALID_FD)
+        return mStream->hasQueuedData();
+    else
+    {
+        RTT::extras::FileDescriptorActivity* fd_activity =
+            getActivity<RTT::extras::FileDescriptorActivity>();
+        if (fd_activity)
+            return fd_activity->isUpdated(mDriver->getFileDescriptor());
+        else return true;
+    }
 }
 
 void Task::updateHook()
 {
-    mHasIO = false;
-    mDriver->setOutputBufferEnabled(_io_raw_out.connected() || !mDriver->isValid());
-
-    if (mDriver->isOutputBufferEnabled() && mDriver->getOutputBufferSize())
-    {
-        // Check if there is some data in the driver's output buffer. If it is
-        // the case, then the user most likely forgot to call pushAllData() at
-        // the end of his updateHook()
-        log(RTT::Warning) << "unwritten data is present in the driver's output buffer. Did you forget to call pushAllData() at the end of the updateHook() ?" << RTT::endlog();
-        pushAllData();
-    }
-
     TaskBase::updateHook();
 
-    if (mDriver->isValid())
+    if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
         RTT::extras::FileDescriptorActivity* fd_activity =
             getActivity<RTT::extras::FileDescriptorActivity>();
         if (fd_activity)
         {
-            mHasIO = fd_activity->isUpdated(mDriver->getFileDescriptor());
             if (fd_activity->hasError())
                 return exception(IO_ERROR);
         }
-        else
-        {
-            std::cout << "activity: not a FDActivity" << std::endl;
-            mHasIO = true;
-        }
     }
-    else
-    {
-        while (_io_raw_in.read(mRawPacket, false) == RTT::NewData)
-        {
-            std::cout << "got raw input" << std::endl;
-            mHasIO = true;
-            mDriver->pushInputRaw(mRawPacket.data);
-        }
-    }
-
-    if (mHasIO)
-        processIO();
+    processIO();
 }
 
 void Task::processIO()
 {
-}
-
-void Task::pushAllData()
-{
-    if (_io_raw_out.connected())
-    {
-        mRawPacket.time = base::Time::now();
-        mDriver->pullOutputRaw(mRawPacket.data);
-        _io_raw_out.write(mRawPacket);
-    }
-
-    base::Time now = base::Time::now();
-    if ((now - mLastStatus) > _io_status_interval.get())
-    {
-        _io_status.write(mDriver->getStatus());
-        mLastStatus = now;
-    }
 }
 
 // void Task::errorHook()
@@ -157,12 +149,15 @@ void Task::stopHook()
         //set timeout back so we don't timeout on the rtt's pipe
         fd_activity->setTimeout(0);
     }
+    mDriver->removeListener(mListener);
     TaskBase::stopHook();
 }
 
 void Task::cleanupHook()
 {
     TaskBase::cleanupHook();
-    mDriver->close();
+    if (mDriver) // the subclass could decide to delete the driver there
+        mDriver->close();
+    mStream = 0;
 }
 

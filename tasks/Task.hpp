@@ -7,6 +7,8 @@
 
 namespace iodrivers_base {
     class Driver;
+    class PortListener;
+    class PortStream;
 
     class Task : public TaskBase
     {
@@ -14,46 +16,39 @@ namespace iodrivers_base {
 
     protected:
         Driver* mDriver;
+
+        /** IOStream object that does I/O on the ports */
+        PortStream* mStream;
+        /** IOListener object that outputs the driver's communication to ports */
+        PortListener* mListener;
+
         RawPacket mRawPacket;
         base::Time mLastStatus;
-        bool mHasIO;
 
         /** Sets the driver object
          *
-         * Must be called before the TaskBase::startHook method gets called
+         * Must be called before either the TaskBase::startHook method gets
+         * called for tasks that do not require configuration, or
+         * TaskBase::configureHook otherwise
          */
         void setDriver(Driver* driver);
 
-        /** Pushes all output data currently queued in the Driver class to the
-         * _out_raw port if it is connected
-         *
-         * This method MUST be called at the end of the updateHook in the
-         * subclasses. A check is implemented to warn if the subclass did not do
-         * this. It will output warnings looking like:
-         *
-         *   unwritten data is present in the driver's output buffer. Did you forget to call pushAllData() at the end of the updateHook() ?
+        /** DEPRECATED
          */
         void pushAllData();
 
-        /** If deployed using a file descriptor activity, returns true if there
-         * is I/O on the driver's file descriptor and/or on the raw data input
-         *
-         * Otherwise, returns always true
+        /** Returns true if there is some I/O available to read on the driver
          */
-        bool hasIO() const;
+        bool hasIO();
 
-        /** Called from the updateHook() when some valid packages are available
-         * on the driver side
-         *
-         * This is meant to be reimplemented by subclasses, instead of hooking
-         * into the updateHook
+        /** DEPRECATED
          */
         virtual void processIO();
 
     public:
         Task(std::string const& name = "iodrivers_base::Task");
         Task(std::string const& name, RTT::ExecutionEngine* engine);
-	~Task();
+	virtual ~Task();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -68,7 +63,7 @@ namespace iodrivers_base {
          *     ...
          *   end
          */
-        // bool configureHook();
+        bool configureHook();
 
         /** This hook is called by Orocos when the state machine transitions
          * from Stopped to Running. If it returns false, then the component will

@@ -2,7 +2,7 @@
 
 include(iodrivers_baseTaskLib)
 ADD_LIBRARY(${IODRIVERS_BASE_TASKLIB_NAME} SHARED 
-    ${IODRIVERS_BASE_TASKLIB_SOURCES})
+    PortStream.cpp ${IODRIVERS_BASE_TASKLIB_SOURCES})
 
 add_dependencies(${IODRIVERS_BASE_TASKLIB_NAME}
     regen-typekit)

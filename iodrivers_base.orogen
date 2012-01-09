@@ -23,6 +23,10 @@ task_context "Task" do
         doc "if connected, data will be received through this port instead of using a file descriptor"
     output_port("io_raw_out", "iodrivers_base/RawPacket").
         doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
+    output_port("io_read_listener", "iodrivers_base/RawPacket").
+        doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
+    output_port("io_write_listener", "iodrivers_base/RawPacket").
+        doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
     output_port("io_status", "iodrivers_base/Status").
         doc "statistics and status about the I/O channel"
 
