@@ -1,6 +1,6 @@
 <package>
   <description brief="Base implementation for integrating a iodrivers_base::Driver subclass into oroGen">
-  
+      This component is unit-tested separately in the tests/orogen/iodrivers_base package of rock.tests
   </description>
   <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
   <license>LGPL v2 or later</license>
