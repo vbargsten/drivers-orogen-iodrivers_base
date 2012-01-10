@@ -127,10 +127,16 @@ void Task::updateHook()
                 return exception(IO_ERROR);
         }
     }
-    processIO();
+
+    if (hasIO())
+        processIO();
 }
 
 void Task::processIO()
+{
+}
+
+void Task::pushAllData()
 {
 }
 
