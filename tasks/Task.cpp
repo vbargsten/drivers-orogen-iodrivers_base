@@ -129,7 +129,14 @@ void Task::updateHook()
     }
 
     if (hasIO())
-        processIO();
+    {
+        bool first_time = true;
+        while (first_time || mDriver->hasPacket())
+        {
+            first_time = false;
+            processIO();
+        }
+    }
 }
 
 void Task::processIO()
