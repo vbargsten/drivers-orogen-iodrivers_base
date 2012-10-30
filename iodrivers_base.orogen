@@ -2,7 +2,7 @@ name "iodrivers_base"
 # Optionally declare the version number
 # version "0.1"
 
-using_library "iodrivers_base", :typekit => false
+using_library "iodrivers_base", :typekit_link => false
 import_types_from "base"
 import_types_from "iodrivers_base/Status.hpp"
 import_types_from "RawPacket.hpp"
