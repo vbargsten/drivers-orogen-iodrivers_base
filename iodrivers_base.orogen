@@ -20,13 +20,14 @@ task_context "Task" do
         doc("the interval at which the status port should be written. Defaults to one second")
 
     input_port("io_raw_in", "iodrivers_base/RawPacket").
+        needs_reliable_connection.
         doc "if connected, data will be received through this port instead of using a file descriptor"
     output_port("io_raw_out", "iodrivers_base/RawPacket").
         doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
     output_port("io_read_listener", "iodrivers_base/RawPacket").
-        doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
+        doc "echoes all data that has been received by the driver"
     output_port("io_write_listener", "iodrivers_base/RawPacket").
-        doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
+        doc "echoes all data that has been sent by the driver"
     output_port("io_status", "iodrivers_base/Status").
         doc "statistics and status about the I/O channel"
 
