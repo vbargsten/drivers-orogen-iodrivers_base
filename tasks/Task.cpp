@@ -96,6 +96,8 @@ bool Task::startHook()
         mStream = new PortStream(_io_raw_in, _io_raw_out);
         mDriver->setMainStream(mStream);
     }
+
+    mLastStatus = base::Time::now();
     return true;
 }
 
@@ -128,6 +130,9 @@ void Task::updateHook()
         }
     }
 
+    if ((base::Time::now() - mLastStatus) > _io_status_interval.get())
+        updateIOStatus();
+
     if (hasIO())
     {
         bool first_time = true;
@@ -139,7 +144,10 @@ void Task::updateHook()
     }
 }
 
+void Task::updateIOStatus()
 {
+    mLastStatus = base::Time::now();
+    _io_status.write(mDriver->getStatus());
 }
 
 void Task::pushAllData()

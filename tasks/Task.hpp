@@ -46,6 +46,9 @@ namespace iodrivers_base {
          */
         virtual void processIO() = 0;
 
+        /** Updates the IO status information on the io_status port */
+        void updateIOStatus();
+
     public:
         Task(std::string const& name = "iodrivers_base::Task");
         Task(std::string const& name, RTT::ExecutionEngine* engine);
