@@ -11,7 +11,8 @@ task_context "Task" do
     doc "base task for integration of device drivers based on iodrivers_base::Driver. It is not meant to be used directly, but as a base class for driver tasks."
     abstract
 
-    property "io_port", "/std/string", "the device address. It can either be serial://PATH[:baudrate], udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if you mean to use the io_raw_in and io_raw_out ports."
+    property("io_port", "/std/string").
+        doc("the device address. It can either be serial://PATH[:baudrate], udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if you mean to use the io_raw_in and io_raw_out ports.")
     property("io_write_timeout", "/base/Time").
         doc("the timeout on write. Defaults to one second. Used only in direct I/O mode")
     property("io_read_timeout", "/base/Time").
