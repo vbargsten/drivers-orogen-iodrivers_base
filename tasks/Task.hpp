@@ -41,9 +41,10 @@ namespace iodrivers_base {
          */
         bool hasIO();
 
-        /** DEPRECATED
+        /** Called back by the updateHook. It must be reimplemented to process
+         * all packets that are currently queued in the driver
          */
-        virtual void processIO();
+        virtual void processIO() = 0;
 
     public:
         Task(std::string const& name = "iodrivers_base::Task");
