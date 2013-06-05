@@ -47,6 +47,8 @@ bool Task::configureHook()
 {
     if (!_io_port.get().empty() && _io_raw_in.connected())
         throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+    else if (_io_port.get().empty() && !_io_raw_in.connected())
+        throw std::runtime_error("either the io_port property must be set to a valid URL or the io_raw_in port must be connected");
 
     if (! TaskBase::configureHook())
         return false;
