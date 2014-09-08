@@ -161,8 +161,15 @@ void Task::pushAllData()
 //     TaskBase::errorHook();
 // }
 
+void Task::exceptionHook()
+{
+    updateIOStatus();
+    return TaskBase::exceptionHook();
+}
+
 void Task::stopHook()
 {
+    updateIOStatus();
     RTT::extras::FileDescriptorActivity* fd_activity =
         getActivity<RTT::extras::FileDescriptorActivity>();
     if (fd_activity)
