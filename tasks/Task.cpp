@@ -49,40 +49,16 @@ bool Task::configureHook()
         throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
     else if (_io_port.get().empty() && !_io_raw_in.connected())
         throw std::runtime_error("either the io_port property must be set to a valid URL or the io_raw_in port must be connected");
+    if (!mDriver)
+        throw std::runtime_error("call setDriver(driver) before configureHook()");
 
     if (! TaskBase::configureHook())
-        return false;
-
-    if (mDriver && _io_raw_in.connected())
-    {
-        mStream = new PortStream(_io_raw_in, _io_raw_out);
-        mDriver->setMainStream(mStream);
-    }
-
-    return true;
-}
-
-bool Task::startHook()
-{
-    if (!_io_port.get().empty() && _io_raw_in.connected())
-        throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
-
-    if (!mDriver)
-    {
-        log(RTT::Error) << "call setDriver(driver) before TaskBase::startHook()" << RTT::endlog();
-        return false;
-    }
-
-    if (! TaskBase::startHook())
         return false;
 
     mDriver->addListener(mListener);
 
     if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
-        if (_io_raw_in.connected())
-            throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
-
         RTT::extras::FileDescriptorActivity* fd_activity =
             getActivity<RTT::extras::FileDescriptorActivity>();
         if (fd_activity)
@@ -98,6 +74,17 @@ bool Task::startHook()
         mStream = new PortStream(_io_raw_in, _io_raw_out);
         mDriver->setMainStream(mStream);
     }
+
+    return true;
+}
+
+bool Task::startHook()
+{
+    if (!_io_port.get().empty() && _io_raw_in.connected())
+        throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+
+    if (! TaskBase::startHook())
+        return false;
 
     mLastStatus = base::Time::now();
     return true;
@@ -163,6 +150,11 @@ void Task::pushAllData()
 
 void Task::stopHook()
 {
+    TaskBase::stopHook();
+}
+
+void Task::cleanupHook()
+{
     RTT::extras::FileDescriptorActivity* fd_activity =
         getActivity<RTT::extras::FileDescriptorActivity>();
     if (fd_activity)
@@ -172,11 +164,7 @@ void Task::stopHook()
         fd_activity->setTimeout(0);
     }
     mDriver->removeListener(mListener);
-    TaskBase::stopHook();
-}
 
-void Task::cleanupHook()
-{
     TaskBase::cleanupHook();
     if (mDriver) // the subclass could decide to delete the driver there
         mDriver->close();
