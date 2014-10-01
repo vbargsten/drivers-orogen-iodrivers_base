@@ -23,8 +23,8 @@ void PortStream::waitRead(base::Time const& timeout)
     uint64_t full_timeout = timeout.toMicroseconds();
     if (full_timeout > 10000)
     {
-        count = 10;
-        sleep_time = full_timeout / 10;
+        sleep_time = 10000;
+        count = (full_timeout + sleep_time - 1) / sleep_time;
     }
     else
     {
