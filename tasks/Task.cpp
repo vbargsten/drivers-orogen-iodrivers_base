@@ -59,6 +59,9 @@ bool Task::configureHook()
 
     if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
+        if (_io_raw_in.connected())
+            throw std::runtime_error("cannot use the io_raw_in port and a normal I/O mechanism at the same time");
+
         RTT::extras::FileDescriptorActivity* fd_activity =
             getActivity<RTT::extras::FileDescriptorActivity>();
         if (fd_activity)
