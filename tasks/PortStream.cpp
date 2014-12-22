@@ -4,7 +4,7 @@
 using namespace iodrivers_base;
 
 PortStream::PortStream(RTT::InputPort<RawPacket>& in, RTT::OutputPort<RawPacket>& out)
-    : mIn(in), mOut(out), mHasRead(false) {}
+    : mIn(in), mOut(out) {}
 
 bool PortStream::hasQueuedData()
 {
@@ -16,7 +16,7 @@ bool PortStream::hasQueuedData()
 
 void PortStream::waitRead(base::Time const& timeout)
 {
-    if (mHasRead)
+    if (!mPacketRead.data.empty())
         return;
 
     uint64_t sleep_time;
