@@ -8,9 +8,10 @@ PortStream::PortStream(RTT::InputPort<RawPacket>& in, RTT::OutputPort<RawPacket>
 
 bool PortStream::hasQueuedData()
 {
-    if (!mHasRead && mIn.read(mPacketRead) == RTT::NewData)
-        mHasRead = true;
-    return mHasRead;
+    if (mPacketRead.data.empty())
+        return (mIn.read(mPacketRead) == RTT::NewData);
+    else
+        return true;
 }
 
 void PortStream::waitRead(base::Time const& timeout)
@@ -35,10 +36,7 @@ void PortStream::waitRead(base::Time const& timeout)
     for (int i = 0; i < count; ++i)
     {
         if (mIn.read(mPacketRead) == RTT::NewData)
-        {
-            mHasRead = true;
             return;
-        }
         usleep(sleep_time);
     }
     throw TimeoutError(TimeoutError::NONE, "waitRead(): timeout");
@@ -49,18 +47,18 @@ void PortStream::waitWrite(base::Time const& timeout)
 }
 size_t PortStream::read(uint8_t* buffer, size_t buffer_size)
 {
-    if (!mHasRead)
+    if (mPacketRead.data.empty())
     {
         if (mIn.read(mPacketRead) != RTT::NewData)
             return 0;
     }
 
-    if (buffer_size < mPacketRead.data.size())
-        throw std::runtime_error("in PortStream::read(): buffer too small, it should be sized bigger than the biggest packet that could be received on the port");
-
-    mHasRead = false;
-    memcpy(&buffer[0], &mPacketRead.data[0], mPacketRead.data.size());
-    return mPacketRead.data.size();
+    size_t data_size = std::min(buffer_size, mPacketRead.data.size());
+    memcpy(&buffer[0], &mPacketRead.data[0], data_size);
+    size_t remaining = mPacketRead.data.size() - data_size;
+    memmove(&mPacketRead.data[0], &mPacketRead.data[data_size], remaining);
+    mPacketRead.data.resize(remaining);
+    return data_size;
 }
 size_t PortStream::write(uint8_t const* buffer, size_t buffer_size)
 {

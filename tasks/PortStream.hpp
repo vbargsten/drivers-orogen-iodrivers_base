@@ -14,7 +14,6 @@ class PortStream : public IOStream
     RTT::InputPort<RawPacket>& mIn;
     RTT::OutputPort<RawPacket>& mOut;
 
-    bool mHasRead;
     RawPacket mPacketRead;
     RawPacket mPacketWrite;
 
