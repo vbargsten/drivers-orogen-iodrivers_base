@@ -173,11 +173,14 @@ void Task::cleanupHook()
         //set timeout back so we don't timeout on the rtt's pipe
         fd_activity->setTimeout(0);
     }
-    mDriver->removeListener(mListener);
+
+    if (mDriver) // the subclass could have decided to delete the driver before calling us
+    {
+        mDriver->removeListener(mListener);
+        mDriver->close();
+    }
 
     TaskBase::cleanupHook();
-    if (mDriver) // the subclass could decide to delete the driver there
-        mDriver->close();
     mStream = 0;
 }
 
