@@ -7,30 +7,38 @@ import_types_from "base"
 import_types_from "iodrivers_base/Status.hpp"
 import_types_from "RawPacket.hpp"
 
+# Base task for integration of device drivers based on iodrivers_base::Driver.
+# It is not meant to be used directly, but as a base class for driver tasks."
+#
+# See http://rock-robotics.org/stable/documentation/device_drivers/index.html
+# for more information
 task_context "Task" do
-    doc "base task for integration of device drivers based on iodrivers_base::Driver. It is not meant to be used directly, but as a base class for driver tasks."
     abstract
 
-    property("io_port", "/std/string").
-        doc("the device address. It can either be serial://PATH[:baudrate], udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if you mean to use the io_raw_in and io_raw_out ports.")
-    property("io_write_timeout", "/base/Time").
-        doc("the timeout on write. Defaults to one second. Used only in direct I/O mode")
-    property("io_read_timeout", "/base/Time").
-        doc("the timeout on read. Defaults to one second")
-    property("io_status_interval", "/base/Time").
-        doc("the interval at which the status port should be written. Defaults to one second")
+    # The device address. It can either be serial://PATH[:baudrate],
+    # udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if
+    # you mean to use the io_raw_in and io_raw_out ports.
+    property "io_port", "/std/string"
+    # The timeout on write. Defaults to one second. Used only in direct I/O mode
+    property "io_write_timeout", "/base/Time"
+    # The timeout on read. Defaults to one second
+    property "io_read_timeout", "/base/Time"
+    # The interval at which the status port should be written. Defaults to one
+    # second
+    property "io_status_interval", "/base/Time"
 
+    # If connected, data will be received through this port instead of using a
+    # file descriptor
     input_port("io_raw_in", "iodrivers_base/RawPacket").
-        needs_reliable_connection.
-        doc "if connected, data will be received through this port instead of using a file descriptor"
-    output_port("io_raw_out", "iodrivers_base/RawPacket").
-        doc "if connected, data will be sent through this port either instead of or in addition to using a file descriptor"
-    output_port("io_read_listener", "iodrivers_base/RawPacket").
-        doc "echoes all data that has been received by the driver"
-    output_port("io_write_listener", "iodrivers_base/RawPacket").
-        doc "echoes all data that has been sent by the driver"
-    output_port("io_status", "iodrivers_base/Status").
-        doc "statistics and status about the I/O channel"
+        needs_reliable_connection
+    # If connected, data will be sent through this port either instead of or in addition to using a file descriptor
+    output_port "io_raw_out", "iodrivers_base/RawPacket"
+    # Echoes all data that has been received by the driver
+    output_port "io_read_listener", "iodrivers_base/RawPacket"
+    # Echoes all data that has been sent by the driver
+    output_port "io_write_listener", "iodrivers_base/RawPacket"
+    # Statistics and status about the I/O channel
+    output_port "io_status", "iodrivers_base/Status"
 
     exception_states :IO_TIMEOUT, :IO_ERROR
 
