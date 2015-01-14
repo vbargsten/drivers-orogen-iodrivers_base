@@ -46,3 +46,15 @@ task_context "Task" do
     fd_driven
 end
 
+# Simple task that allows to mirror the I/O from a port supported by
+# iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
+task_context "Proxy" do
+    subclasses "Task"
+
+    # Data that should be sent to io_port
+    input_port("tx", "iodrivers_base/RawPacket").
+        needs_reliable_connection
+    # Data received on io_port
+    output_port "rx", "iodrivers_base/RawPacket"
+end
+
