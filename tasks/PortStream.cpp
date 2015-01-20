@@ -9,7 +9,7 @@ PortStream::PortStream(RTT::InputPort<RawPacket>& in, RTT::OutputPort<RawPacket>
 bool PortStream::hasQueuedData()
 {
     if (mPacketRead.data.empty())
-        return (mIn.read(mPacketRead) == RTT::NewData);
+        return (mIn.read(mPacketRead, false) == RTT::NewData);
     else
         return true;
 }
@@ -35,7 +35,7 @@ void PortStream::waitRead(base::Time const& timeout)
 
     for (int i = 0; i < count; ++i)
     {
-        if (mIn.read(mPacketRead) == RTT::NewData)
+        if (mIn.read(mPacketRead, false) == RTT::NewData)
             return;
         usleep(sleep_time);
     }
@@ -49,7 +49,7 @@ size_t PortStream::read(uint8_t* buffer, size_t buffer_size)
 {
     if (mPacketRead.data.empty())
     {
-        if (mIn.read(mPacketRead) != RTT::NewData)
+        if (mIn.read(mPacketRead, false) != RTT::NewData)
             return 0;
     }
 
