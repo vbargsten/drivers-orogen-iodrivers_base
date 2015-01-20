@@ -153,7 +153,9 @@ void Task::pushAllData()
 
 void Task::exceptionHook()
 {
-    updateIOStatus();
+    // No guarantee that the driver is initialized or not yet deleted here
+    if (mDriver)
+        updateIOStatus();
     return TaskBase::exceptionHook();
 }
 
