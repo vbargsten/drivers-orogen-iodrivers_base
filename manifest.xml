@@ -2,15 +2,8 @@
   <description brief="Base implementation for integrating a iodrivers_base::Driver subclass into oroGen">
       This component is unit-tested separately in the tests/orogen/iodrivers_base package of rock.tests
   </description>
-  <author>Sylvain Joyeux/sylvain.joyeux@dfki.de</author>
+  <maintainer>Sylvain Joyeux/sylvain.joyeux@dfki.de</maintainer>
   <license>LGPL v2 or later</license>
   <url>http://rock-robotics.org/documentation/device_drivers/index.html</url>
   <depend package="drivers/iodrivers_base" />
-  <!--
-   To add any dependencies use the depend tag
-  <depend package="dummy-dependency-0" />
-	...
-  <depend package="dummy-dependency-n-1" />
-  <depend package="dummy-dependency-n" />
-  -->
 </package>
