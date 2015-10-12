@@ -69,14 +69,14 @@ bool Task::configureHook()
             fd_activity->watch(mDriver->getFileDescriptor());
             fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
         }
-        mDriver->setReadTimeout(_io_read_timeout.get());
-        mDriver->setWriteTimeout(_io_write_timeout.get());
     }
     else if (_io_raw_in.connected() && !mStream)
     {
         mStream = new PortStream(_io_raw_in, _io_raw_out);
         mDriver->setMainStream(mStream);
     }
+    mDriver->setReadTimeout(_io_read_timeout.get());
+    mDriver->setWriteTimeout(_io_write_timeout.get());
 
     return true;
 }
