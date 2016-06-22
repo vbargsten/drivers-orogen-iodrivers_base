@@ -2,7 +2,7 @@
 #define IODRIVERS_BASE_RAW_PACKET_HPP
 
 #include <vector>
-#include <base/time.h>
+#include <base/Time.hpp>
 
 namespace iodrivers_base
 {
