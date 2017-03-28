@@ -56,5 +56,8 @@ task_context "Proxy" do
         needs_reliable_connection
     # Data received on io_port
     output_port "rx", "iodrivers_base/RawPacket"
+
+    port_driven
+    fd_driven
 end
 
