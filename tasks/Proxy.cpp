@@ -58,6 +58,18 @@ int Proxy::createProxyDriver()
     return DUMMY_BUFFER_SIZE;
 }
 
+void Proxy::writePacket(RawPacket const& packet)
+{
+    mDriver->writePacket(tx_packet.data.data(), tx_packet.data.size());
+}
+
+void Proxy::readPacket(RawPacket& packet)
+{
+    int packet_size = mDriver->readPacket(packet_buffer.data(), packet_buffer.size());
+    packet.time = base::Time::now();
+    packet.data = std::vector<uint8_t>(packet_buffer.begin(), packet_buffer.begin() + packet_size);
+}
+
 bool Proxy::startHook()
 {
     if (! ProxyBase::startHook())
@@ -69,16 +81,13 @@ void Proxy::updateHook()
     ProxyBase::updateHook();
 
     while (_tx.read(tx_packet, false) == RTT::NewData)
-        mDriver->writePacket(tx_packet.data.data(), tx_packet.data.size());
+        writePacket(tx_packet);
 }
 void Proxy::processIO()
 {
     try
     {
-        int packet_size = mDriver->readPacket(packet_buffer.data(), buffer_size);
-        rx_packet.time = base::Time::now();
-        rx_packet.data.resize(packet_size);
-        memcpy(rx_packet.data.data(), packet_buffer.data(), packet_size);
+        readPacket(rx_packet);
         _rx.write(rx_packet);
     }
     catch (TimeoutError)

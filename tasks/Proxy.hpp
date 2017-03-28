@@ -30,6 +30,9 @@ iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
 
     protected:
         virtual int createProxyDriver();
+        virtual void writePacket(RawPacket const& packet);
+        virtual void readPacket(RawPacket& packet);
+
         void processIO();
         int buffer_size;
         std::vector<boost::uint8_t> packet_buffer;
