@@ -28,7 +28,11 @@ Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
 
 Task::~Task()
 {
-    delete mListener;
+    // if mDriver is not NULL, we assume that for whatever reason, cleanupHook
+    // hasn't been called. We can't delete mListener then because it might have
+    // been deleted when the subclass deleted the driver object.
+    if (!mDriver)
+        delete mListener;
 }
 
 void Task::setDriver(Driver* driver)
