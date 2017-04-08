@@ -180,6 +180,7 @@ void Task::cleanupHook()
     {
         mDriver->removeListener(mListener);
         mDriver->close();
+        mDriver = 0;
     }
 
     TaskBase::cleanupHook();
