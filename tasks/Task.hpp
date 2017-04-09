@@ -10,6 +10,51 @@ namespace iodrivers_base {
     class PortListener;
     class PortStream;
 
+    /** Generic integration of an iodrivers_base::Driver in oroGen
+     *
+     * configureHook: Subclasses must call setDriver with a valid driver object
+     * before calling the base task's configureHook. Any I/O must be done after
+     * the base configureHook is done. If the _io_port property is not empty,
+     * the subclass must open the URI itself. Otherwise, the base configureHook
+     * will tie the task's io_raw_in and io_raw_out ports to the device.
+     *
+     * <code>
+     * bool Task::configureHook()
+     * {
+     *   std::auto_ptr<MyDriver> driver(new MyDriver);
+     *   if (!_io_port.get().empty())
+     *     driver->openURI(_io_port.get());
+     *   setDriver(driver.release());
+     *
+     *   if (!TaskBase::configureHook())
+     *     return false;
+     *
+     *   // Do device initialization here. NEVER before
+     *   // TaskBase::configureHook has been called
+     *   return true;
+     * }
+     * </code>
+     *
+     * cleanupHook: the base implementation closes the device. Perform device
+     * de-initialization before calling the base cleanupHook.
+     *
+     * processIO: called when the task is called because of I/O has been
+     * received. It will be called as long as there are valid packets buffered,
+     * so processIO must ensure that all available packets have been read.
+     *
+     * <h2>Device ownership</h2>
+     *
+     * The device object is owned by the subclass, which is responsible for its
+     * destruction. setDriver may be called more than once with the same device
+     * (so, it's OK to allocate the device as an attribute instead of allocating
+     * on the heap). 
+     *
+     * Calling setDriver adds connections between the driver and task ports. If
+     * this connection must be removed (to get a "detached" device), one must
+     * call detachDriver() after having called setDriver. Note that one does not
+     * need to do so before the driver is deleted. Calling detachDriver after
+     * having deleted the driver, though, will lead to a use-after-free.
+     */
     class Task : public TaskBase
     {
 	friend class TaskBase;
@@ -19,7 +64,7 @@ namespace iodrivers_base {
 
         /** IOStream object that does I/O on the ports */
         PortStream* mStream;
-        /** IOListener object that outputs the driver's communication to ports */
+        /** Listener object that forwards I/O to the monitoring ports */
         PortListener* mListener;
 
         RawPacket mRawPacket;
@@ -32,6 +77,14 @@ namespace iodrivers_base {
          * TaskBase::configureHook otherwise
          */
         void setDriver(Driver* driver);
+
+        /** Detaches the current driver from the task
+         */
+        void detachDriver();
+
+        /** Returns the current driver object
+         */
+        Driver* getDriver() const;
 
         /** DEPRECATED
          */

@@ -10,7 +10,7 @@ using namespace iodrivers_base;
 
 Task::Task(std::string const& name)
     : TaskBase(name)
-    , mDriver(0), mStream(0), mListener(new PortListener(_io_read_listener, _io_write_listener))
+    , mDriver(0), mStream(0), mListener(0)
 {
     _io_write_timeout.set(base::Time::fromSeconds(1));
     _io_read_timeout.set(base::Time::fromSeconds(1));
@@ -19,7 +19,7 @@ Task::Task(std::string const& name)
 
 Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
     : TaskBase(name, engine)
-    , mDriver(0), mStream(0), mListener(new PortListener(_io_read_listener, _io_write_listener))
+    , mDriver(0), mStream(0), mListener(0)
 {
     _io_write_timeout.set(base::Time::fromSeconds(1));
     _io_read_timeout.set(base::Time::fromSeconds(1));
@@ -28,19 +28,35 @@ Task::Task(std::string const& name, RTT::ExecutionEngine* engine)
 
 Task::~Task()
 {
-    // if mDriver is not NULL, we assume that for whatever reason, cleanupHook
-    // hasn't been called. We can't delete mListener then because it might have
-    // been deleted when the subclass deleted the driver object.
-    if (!mDriver)
-        delete mListener;
 }
 
 void Task::setDriver(Driver* driver)
 {
-    if (mDriver && mListener)
-        mDriver->removeListener(mListener);
+    if (driver == mDriver)
+        return;
+
+    if (driver)
+    {
+        mListener = new PortListener(_io_read_listener, _io_write_listener);
+        driver->addListener(mListener);
+    }
+
     mDriver = driver;
     mStream = 0;
+}
+
+void Task::detachDriver()
+{
+    if (mDriver)
+    {
+        mDriver->removeListener(mListener);
+        mDriver = 0;
+    }
+}
+
+Driver* Task::getDriver() const
+{
+    return mDriver;
 }
 
 /// The following lines are template definitions for the various state machine
@@ -59,8 +75,6 @@ bool Task::configureHook()
     if (! TaskBase::configureHook())
         return false;
 
-    mDriver->addListener(mListener);
-
     if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
         if (_io_raw_in.connected())
@@ -74,7 +88,7 @@ bool Task::configureHook()
             fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
         }
     }
-    else if (_io_raw_in.connected() && !mStream)
+    else if (_io_raw_in.connected())
     {
         mStream = new PortStream(_io_raw_in, _io_raw_out);
         mDriver->setMainStream(mStream);
@@ -181,11 +195,7 @@ void Task::cleanupHook()
     }
 
     if (mDriver) // the subclass could have decided to delete the driver before calling us
-    {
-        mDriver->removeListener(mListener);
         mDriver->close();
-        mDriver = 0;
-    }
 
     TaskBase::cleanupHook();
     mStream = 0;
