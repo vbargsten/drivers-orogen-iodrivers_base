@@ -2,7 +2,7 @@
 
 include(iodrivers_baseTaskLib)
 ADD_LIBRARY(${IODRIVERS_BASE_TASKLIB_NAME} SHARED 
-    PortStream.cpp ${IODRIVERS_BASE_TASKLIB_SOURCES})
+    PortStream.cpp ConfigureGuard.cpp ${IODRIVERS_BASE_TASKLIB_SOURCES})
 
 add_dependencies(${IODRIVERS_BASE_TASKLIB_NAME}
     regen-typekit)
@@ -18,6 +18,6 @@ INSTALL(TARGETS ${IODRIVERS_BASE_TASKLIB_NAME}
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib/orocos)
 
-INSTALL(FILES ${IODRIVERS_BASE_TASKLIB_HEADERS}
+INSTALL(FILES ${IODRIVERS_BASE_TASKLIB_HEADERS} ConfigureGuard.hpp
     DESTINATION include/orocos/iodrivers_base)
 
