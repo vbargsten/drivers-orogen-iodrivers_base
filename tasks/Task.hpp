@@ -9,6 +9,7 @@ namespace iodrivers_base {
     class Driver;
     class PortListener;
     class PortStream;
+    class ConfigureGuard;
 
     /** Generic integration of an iodrivers_base::Driver in oroGen
      *
@@ -58,7 +59,7 @@ namespace iodrivers_base {
     class Task : public TaskBase
     {
 	friend class TaskBase;
-
+    friend class ConfigureGuard;
     protected:
         Driver* mDriver;
 
