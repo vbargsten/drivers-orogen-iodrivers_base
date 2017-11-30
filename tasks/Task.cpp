@@ -51,6 +51,8 @@ void Task::detachDriver()
     {
         mDriver->removeListener(mListener);
         mDriver = 0;
+        delete mListener;
+        mListener = 0;
     }
 }
 
