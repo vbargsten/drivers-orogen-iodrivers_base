@@ -17,11 +17,14 @@ namespace iodrivers_base {
      * before calling the base task's configureHook. Any I/O must be done after
      * the base configureHook is done. If the _io_port property is not empty,
      * the subclass must open the URI itself. Otherwise, the base configureHook
-     * will tie the task's io_raw_in and io_raw_out ports to the device.
+     * will tie the task's io_raw_in and io_raw_out ports to the device. Additionally,
+     * in order to easily guarantee an acceptable level of exception-safety, one
+     * should use the scope guard ConfigureGuard provided with this package.
      *
      * <code>
      * bool Task::configureHook()
      * {
+     *   iodrivers_base::ConfigureGuard guard(this);
      *   std::auto_ptr<MyDriver> driver(new MyDriver);
      *   if (!_io_port.get().empty())
      *     driver->openURI(_io_port.get());
@@ -32,6 +35,9 @@ namespace iodrivers_base {
      *
      *   // Do device initialization here. NEVER before
      *   // TaskBase::configureHook has been called
+     *   // Also, don't forget to release the guard by
+     *   // calling commit() on it just before returning.
+     *   guard.commit();
      *   return true;
      * }
      * </code>
