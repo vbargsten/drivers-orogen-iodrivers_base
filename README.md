@@ -29,7 +29,8 @@ There is two things left to do:
  * __configureHook__: create the device driver, open the device and call the
    setDriver() method. The device's "name" (i.e. device file, IP for network-based access, ...) is
    provided in the io_port property. Note that it is legal for this property to
-   be empty (see the next section for explanations).
+   be empty (see the next section for explanations). To ensure exception-safety of
+   the configureHook, one must use iodrivers_base's ConfigureGuard guard class (example below).
 
 ~~~ cpp
 setDriver(driver)
@@ -48,6 +49,10 @@ For instance, one could have a setup looking like:
 ~~~ cpp
 bool Task::configureHook()
 {
+  // Un-configure the device driver if the configure fails.
+  // You MUST call guard.commit() once the driver is fully
+  // functional (usually before the configureHook's "return true;"
+  iodrivers_base::ConfigureGuard guard(this);
   Driver* driver = new Driver();
   if (!_io_port.get().empty())
     driver->openURI(_io_port.get());
@@ -59,6 +64,9 @@ bool Task::configureHook()
 
   // If some device configuration was needed, it must be done after the
   // setDriver and call to configureHook on TaskBase (i.e., here)
+  
+  guard.commit();
+  return true;
 }
 void Task::processIO()
 {
