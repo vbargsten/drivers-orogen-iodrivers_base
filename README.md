@@ -49,29 +49,30 @@ For instance, one could have a setup looking like:
 ~~~ cpp
 bool Task::configureHook()
 {
-  // Un-configure the device driver if the configure fails.
-  // You MUST call guard.commit() once the driver is fully
-  // functional (usually before the configureHook's "return true;"
-  iodrivers_base::ConfigureGuard guard(this);
-  Driver* driver = new Driver();
-  if (!_io_port.get().empty())
-    driver->openURI(_io_port.get());
-  setDriver(driver);
+    // Un-configure the device driver if the configure fails.
+    // You MUST call guard.commit() once the driver is fully
+    // functional (usually before the configureHook's "return true;"
+    iodrivers_base::ConfigureGuard guard(this);
+    Driver* driver = new Driver();
+    if (!_io_port.get().empty())
+        driver->openURI(_io_port.get());
+    setDriver(driver);
 
-  // This is MANDATORY and MUST be called after the setDriver but before you do
-  // anything with the driver
-  TaskBase::configureHook();
+    // This is MANDATORY and MUST be called after the setDriver but before you do
+    // anything with the driver
+    if (!TaskBase::configureHook())
+        return false;
 
-  // If some device configuration was needed, it must be done after the
-  // setDriver and call to configureHook on TaskBase (i.e., here)
+    // If some device configuration was needed, it must be done after the
+    // setDriver and call to configureHook on TaskBase (i.e., here)
   
-  guard.commit();
-  return true;
+    guard.commit();
+    return true;
 }
 void Task::processIO()
 {
-  mDriver->processSamples();
-  _samples.write(mDriver->getOrientationSample());
+    mDriver->processSamples();
+    _samples.write(mDriver->getOrientationSample());
 }
 ~~~
 
