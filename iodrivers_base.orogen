@@ -48,9 +48,7 @@ end
 
 # Simple task that allows to mirror the I/O from a port supported by
 # iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
-task_context "Proxy" do
-    subclasses "Task"
-
+task_context "Proxy", subclasses: 'Task' do
     # Data that should be sent to io_port
     input_port("tx", "iodrivers_base/RawPacket").
         needs_reliable_connection
