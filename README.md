@@ -7,7 +7,7 @@ Your component must depend on the `drivers/orogen/iodrivers_base` package, and t
 
 In the package's `manifest.xml`, add
 
-~~~
+~~~ xml
 <depend name="drivers/orogen/iodrivers_base" />
 ~~~
 
@@ -44,7 +44,14 @@ setDriver(driver)
    though, so you should take care of it if you want to recreate the object in
    cleanup/configure cycles.
 
-For instance, one could have a setup looking like:
+For instance, assuming the class has a `m_driver` attribute of the Driver
+subclass
+
+~~~ cpp
+std::unique_ptr<Driver> m_driver;
+~~~
+
+One could have a setup looking like:
 
 ~~~ cpp
 bool Task::configureHook()
@@ -53,10 +60,10 @@ bool Task::configureHook()
     // You MUST call guard.commit() once the driver is fully
     // functional (usually before the configureHook's "return true;"
     iodrivers_base::ConfigureGuard guard(this);
-    Driver* driver = new Driver();
+    unique_ptr<Driver> driver(new Driver());
     if (!_io_port.get().empty())
         driver->openURI(_io_port.get());
-    setDriver(driver);
+    setDriver(driver.get());
 
     // This is MANDATORY and MUST be called after the setDriver but before you do
     // anything with the driver
@@ -65,7 +72,8 @@ bool Task::configureHook()
 
     // If some device configuration was needed, it must be done after the
     // setDriver and call to configureHook on TaskBase (i.e., here)
-  
+
+    m_driver = move(driver);
     guard.commit();
     return true;
 }
@@ -73,6 +81,14 @@ void Task::processIO()
 {
     mDriver->processSamples();
     _samples.write(mDriver->getOrientationSample());
+}
+void Task::cleanupHook()
+{
+    // MUST BE done first. It detaches the driver from the task
+    TaskBase::cleanupHook();
+    // Not strictly necessary, the driver will be deleted on the next
+    // successful configureHook anyways. YMMV.
+    m_driver.release();
 }
 ~~~
 
