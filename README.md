@@ -88,7 +88,7 @@ void Task::cleanupHook()
     TaskBase::cleanupHook();
     // Not strictly necessary, the driver will be deleted on the next
     // successful configureHook anyways. YMMV.
-    m_driver.release();
+    m_driver.reset();
 }
 ~~~
 
