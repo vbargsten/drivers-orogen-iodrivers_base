@@ -67,7 +67,9 @@ void Proxy::readPacket(RawPacket& packet)
 {
     int packet_size = mDriver->readPacket(packet_buffer.data(), packet_buffer.size());
     packet.time = base::Time::now();
-    packet.data = std::vector<uint8_t>(packet_buffer.begin(), packet_buffer.begin() + packet_size);
+    packet.data = std::vector<uint8_t>(
+        packet_buffer.begin(), packet_buffer.begin() + packet_size
+    );
 }
 
 bool Proxy::startHook()
@@ -90,7 +92,7 @@ void Proxy::processIO()
         readPacket(rx_packet);
         _rx.write(rx_packet);
     }
-    catch (TimeoutError)
+    catch (TimeoutError const&)
     {
     }
 }
