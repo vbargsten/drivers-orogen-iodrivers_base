@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 name "iodrivers_base"
 # Optionally declare the version number
 # version "0.1"
 
-using_library "iodrivers_base", :typekit_link => false
+using_library "iodrivers_base", typekit_link: false
 import_types_from "base"
 import_types_from "iodrivers_base/Status.hpp"
 import_types_from "RawPacket.hpp"
@@ -29,9 +31,10 @@ task_context "Task" do
 
     # If connected, data will be received through this port instead of using a
     # file descriptor
-    input_port("io_raw_in", "iodrivers_base/RawPacket").
-        needs_reliable_connection
-    # If connected, data will be sent through this port either instead of or in addition to using a file descriptor
+    input_port("io_raw_in", "iodrivers_base/RawPacket")
+        .needs_reliable_connection
+    # If connected, data will be sent through this port either instead of or in
+    # addition to using a file descriptor
     output_port "io_raw_out", "iodrivers_base/RawPacket"
     # Echoes all data that has been received by the driver
     output_port "io_read_listener", "iodrivers_base/RawPacket"
@@ -48,10 +51,10 @@ end
 
 # Simple task that allows to mirror the I/O from a port supported by
 # iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
-task_context "Proxy", subclasses: 'Task' do
+task_context "Proxy", subclasses: "Task" do
     # Data that should be sent to io_port
-    input_port("tx", "iodrivers_base/RawPacket").
-        needs_reliable_connection
+    input_port("tx", "iodrivers_base/RawPacket")
+        .needs_reliable_connection
     # Data received on io_port
     output_port "rx", "iodrivers_base/RawPacket"
 
