@@ -121,9 +121,18 @@ bool Task::hasIO()
     {
         RTT::extras::FileDescriptorActivity* fd_activity =
             getActivity<RTT::extras::FileDescriptorActivity>();
-        if (fd_activity)
+        if (fd_activity) {
             return fd_activity->isUpdated(mDriver->getFileDescriptor());
-        else return true;
+        }
+        else {
+            try {
+                mDriver->getMainStream()->waitRead(base::Time());
+                return true;
+            }
+            catch(iodrivers_base::TimeoutError const&) {
+                return false;
+            }
+        }
     }
 }
 

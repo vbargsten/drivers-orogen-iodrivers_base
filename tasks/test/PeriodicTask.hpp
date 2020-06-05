@@ -1,60 +1,33 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.hpp */
 
-#ifndef IODRIVERS_BASE_PROXY_TASK_HPP
-#define IODRIVERS_BASE_PROXY_TASK_HPP
+#ifndef IODRIVERS_BASE__TEST_PERIODICTASK_TASK_HPP
+#define IODRIVERS_BASE__TEST_PERIODICTASK_TASK_HPP
 
-#include "iodrivers_base/ProxyBase.hpp"
+#include "iodrivers_base/test/PeriodicTaskBase.hpp"
 
-namespace iodrivers_base {
-
-    /*! \class Proxy
-     * \brief The task context provides and requires services. It uses an ExecutionEngine to perform its functions.
-     * Essential interfaces are operations, data flow ports and properties. These interfaces have been defined using the oroGen specification.
-     * In order to modify the interfaces you should (re)use oroGen and rely on the associated workflow.
-     * Simple task that allows to mirror the I/O from a port supported by
-iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
-     * \details
-     * The name of a TaskContext is primarily defined via:
-     \verbatim
-     deployment 'deployment_name'
-         task('custom_task_name','iodrivers_base::Proxy')
-     end
-     \endverbatim
-     *  It can be dynamically adapted when the deployment is called with a prefix argument.
+namespace iodrivers_base{
+namespace test{
+    /** Test task for deployed iodrivers_base tasks that run on non-FD activities
      */
-    class Proxy : public ProxyBase
+    class PeriodicTask : public PeriodicTaskBase
     {
-	friend class ProxyBase;
-    public:
-        static const int DUMMY_BUFFER_SIZE = 1024;
+        friend class PeriodicTaskBase;
 
     protected:
-        virtual int createProxyDriver();
-        virtual void writePacket(RawPacket const& packet);
-        virtual void readPacket(RawPacket& packet);
+        std::unique_ptr<Driver> mDriver;
 
         void processIO();
-        int buffer_size;
-        std::vector<boost::uint8_t> packet_buffer;
-        iodrivers_base::RawPacket rx_packet, tx_packet;
 
     public:
-        /** TaskContext constructor for Proxy
+        /** TaskContext constructor for PeriodicTask
          * \param name Name of the task. This name needs to be unique to make it identifiable via nameservices.
          * \param initial_state The initial TaskState of the TaskContext. Default is Stopped state.
          */
-        Proxy(std::string const& name = "iodrivers_base::Proxy");
+        PeriodicTask(std::string const& name = "iodrivers_base::test::PeriodicTask");
 
-        /** TaskContext constructor for Proxy
-         * \param name Name of the task. This name needs to be unique to make it identifiable for nameservices.
-         * \param engine The RTT Execution engine to be used for this task, which serialises the execution of all commands, programs, state machines and incoming events for a task.
-         *
+        /** Default deconstructor of PeriodicTask
          */
-        Proxy(std::string const& name, RTT::ExecutionEngine* engine);
-
-        /** Default deconstructor of Proxy
-         */
-	~Proxy();
+        ~PeriodicTask();
 
         /** This hook is called by Orocos when the state machine transitions
          * from PreOperational to Stopped. If it returns false, then the
@@ -114,6 +87,7 @@ iodrivers_base::Driver onto the io_read_listener and io_write_listener ports
          */
         void cleanupHook();
     };
+}
 }
 
 #endif

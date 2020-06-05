@@ -1,7 +1,7 @@
 Generic oroGen integration for drivers based on [iodrivers_base](https://github.com/rock-core/drivers-iodrivers_base)
 
-Usage
------
+## Usage
+
 
 Your component must depend on the `drivers/orogen/iodrivers_base` package, and the driver component must subclass `iodrivers_base::Task`:
 
@@ -109,8 +109,8 @@ will have a full stop/cleanup/configure/start cycle if reconfiguration is
 needed. You should therefore not care about dynamic reconfiguration in first
 implementations.
 
-Details about the iodrivers_base::Task interface
-------------------------------------------------
+## Details about the iodrivers_base::Task interface
+
 This interface provides two means of communication between the device and the
 driver.
 
@@ -124,3 +124,62 @@ driver.
 Other properties control the behaviour of the system in both modes (read
 timeout) and write statistics about the I/O. Some properties are specific to one
 mode, in which case this is documented in the property documentation directly.
+
+## Unit testing components built on top of iodrivers_base::Task
+
+The package will by default install helpers that help unit testing components
+built on top of `iodrivers_base::Task` using the
+[Syskit-based unit testing support](https://www.rock-robotics.org/rock-and-syskit/components/testing.html).
+
+**Note** that, following [the Rock philosophy](https://www.rock-robotics.org/rock-and-syskit/libraries/), most
+of the device driver's testing should of course be done
+[at the library level](https://www.rock-robotics.org/rock-and-syskit/libraries/cpp_libraries.html).
+These unit tests should be handling runtime logic that is specific to the component
+integration.
+
+To use these helpers, you need to require the helpers and include them in the
+toplevel describe block:
+
+~~~ ruby
+# frozen_string_literal: true
+
+require "iodrivers_base/orogen_test_helpers"
+using_task_library 'mydriver_project'
+
+describe OroGen.mydriver_project.Task do
+    include IODriversBase::OroGenTestHelpers
+
+    run_live
+end
+~~~
+
+The general worflow is to:
+
+1. deploy the driver-under-test and save it as a `@task` instance variable
+2. call `setup_iodrivers_base_with_ports`. It returns a task whose `in` port allows
+   to read from the driver and `out` to write to it
+3. call unit tests using this task
+
+For instance:
+
+~~~ ruby
+before do
+    @task = syskit_deploy(
+        OroGen.mydriver_project.Task.deployed_as("task_under_test")
+    )
+    @raw_io = setup_iodrivers_base_with_ports
+    syskit_configure_and_start(@task)
+end
+
+it "interprets a status message from the device" do
+    status =
+        expect_execution { syskit_write @raw_io.out_port, some_message }
+        .to { have_one_new_sample @task.status_samples_port }
+
+    # Do some checks on `status`
+end
+~~~
+
+Other helpful methods are `raw_packet_to_s` and `raw_packet_from_s` which convert
+a `String` to or from a `Types.iodrivers_base.RawPacket`. See [the helpers source
+code](test/orogen_test_helpers.rb) for more information

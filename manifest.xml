@@ -5,5 +5,7 @@
   <maintainer>Sylvain Joyeux/sylvain.joyeux@dfki.de</maintainer>
   <license>LGPL v2 or later</license>
   <url>http://rock-robotics.org/documentation/device_drivers/index.html</url>
+
   <depend package="drivers/iodrivers_base" />
+  <test_depend package="tools/syskit" />
 </package>
