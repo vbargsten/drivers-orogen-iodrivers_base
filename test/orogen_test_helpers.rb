@@ -6,9 +6,6 @@ module IODriversBase
     # It relies on the test cases to deploy a task-under-test and store it in the
     # @task instance variable
     module OroGenTestHelpers
-        # The task under test
-        attr_reader :task
-
         def setup
             super
 
@@ -24,7 +21,7 @@ module IODriversBase
         # Configure @task to use a file descriptor
         #
         # Internally, it creates a UDP socket and set the io_port property to connect to it
-        def setup_iodrivers_base_with_fd
+        def setup_iodrivers_base_with_fd(task)
             # We currently have no simple way to forward a file descriptor to
             # the component and have it use it. Randomly assign a port locally,
             # close the socket and ask the component to use it to reduce the
@@ -37,7 +34,7 @@ module IODriversBase
 
             local_socket.connect "localhost", remote_port
 
-            @task.properties.io_port = "udp://localhost:#{local_port}:#{remote_port}"
+            task.properties.io_port = "udp://localhost:#{local_port}:#{remote_port}"
             local_socket
         end
 
@@ -62,13 +59,16 @@ module IODriversBase
                 test_child.io_raw_in_port, type: :buffer, size: 20
         end
 
-        # Configure @task to be connected to another task for its I/O, and return the task
+        # Configure task to be connected to another task for its I/O, and
+        # return the task
         #
         # The "peering" task has a 'in' port and 'out' port. The direction is
         # relative to the task, so write to `out_port` to send data to the driver,
         # and read from `in_port` to read data from it.
-        def setup_iodrivers_base_with_ports
-            port_io = syskit_stub_deploy_configure_and_start(PortIO.use("test" => @task))
+        def setup_iodrivers_base_with_ports(task)
+            port_io = syskit_stub_deploy_configure_and_start(
+                PortIO.use("test" => task)
+            )
             syskit_configure_and_start(port_io, recursive: false)
             syskit_configure_and_start(port_io.raw_io_child, recursive: false)
             port_io.raw_io_child
