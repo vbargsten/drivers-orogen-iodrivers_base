@@ -111,4 +111,3 @@ void Proxy::cleanupHook()
     delete mDriver;
     mDriver = 0;
 }
-
