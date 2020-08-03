@@ -1,6 +1,6 @@
 /* Generated from orogen/lib/orogen/templates/tasks/Task.cpp */
 
-#include "PeriodicTask.hpp"
+#include "FDTask.hpp"
 #include "../ConfigureGuard.hpp"
 
 using namespace iodrivers_base;
@@ -26,16 +26,16 @@ namespace
     };
 }
 
-PeriodicTask::PeriodicTask(std::string const& name)
-    : PeriodicTaskBase(name)
+FDTask::FDTask(std::string const& name)
+    : FDTaskBase(name)
 {
 }
 
-PeriodicTask::~PeriodicTask()
+FDTask::~FDTask()
 {
 }
 
-bool PeriodicTask::configureHook()
+bool FDTask::configureHook()
 {
     unique_ptr<Driver> driver(new DummyDriver());
     // Un-configure the device driver if the configure fails.
@@ -48,7 +48,7 @@ bool PeriodicTask::configureHook()
 
     // This is MANDATORY and MUST be called after the setDriver but before you do
     // anything with the driver
-    if (!PeriodicTaskBase::configureHook())
+    if (!FDTaskBase::configureHook())
         return false;
 
     // If some device configuration was needed, it must be done after the
@@ -59,17 +59,17 @@ bool PeriodicTask::configureHook()
     return true;
 
 }
-bool PeriodicTask::startHook()
+bool FDTask::startHook()
 {
-    if (! PeriodicTaskBase::startHook())
+    if (! FDTaskBase::startHook())
         return false;
     return true;
 }
-void PeriodicTask::updateHook()
+void FDTask::updateHook()
 {
-    PeriodicTaskBase::updateHook();
+    FDTaskBase::updateHook();
 }
-void PeriodicTask::processIO()
+void FDTask::processIO()
 {
     uint8_t buffer[DUMMY_BUFFER_SIZE];
     int packet_size = mDriver->readPacket(buffer, DUMMY_BUFFER_SIZE);
@@ -79,15 +79,15 @@ void PeriodicTask::processIO()
     packet.data = std::vector<uint8_t>(buffer, buffer + packet_size);
     _rx.write(packet);
 }
-void PeriodicTask::errorHook()
+void FDTask::errorHook()
 {
-    PeriodicTaskBase::errorHook();
+    FDTaskBase::errorHook();
 }
-void PeriodicTask::stopHook()
+void FDTask::stopHook()
 {
-    PeriodicTaskBase::stopHook();
+    FDTaskBase::stopHook();
 }
-void PeriodicTask::cleanupHook()
+void FDTask::cleanupHook()
 {
-    PeriodicTaskBase::cleanupHook();
+    FDTaskBase::cleanupHook();
 }

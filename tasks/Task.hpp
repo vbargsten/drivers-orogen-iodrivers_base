@@ -54,7 +54,7 @@ namespace iodrivers_base {
      * The device object is owned by the subclass, which is responsible for its
      * destruction. setDriver may be called more than once with the same device
      * (so, it's OK to allocate the device as an attribute instead of allocating
-     * on the heap). 
+     * on the heap).
      *
      * Calling setDriver adds connections between the driver and task ports. If
      * this connection must be removed (to get a "detached" device), one must
@@ -98,8 +98,12 @@ namespace iodrivers_base {
         void pushAllData();
 
         /** Returns true if there is some I/O available to read on the driver
+         *
+         * @param first_time whether this is the first time hasIO was called within
+         *    updateHook, or a subsequent one. This adds a small optimization in the
+         *    comm FileDescriptorActivity case
          */
-        bool hasIO();
+        bool hasIO(bool first_time = true);
 
         /** Called back by the updateHook. It must be reimplemented to process
          * all packets that are currently queued in the driver
@@ -142,7 +146,7 @@ namespace iodrivers_base {
          *
          * The error(), exception() and fatal() calls, when called in this hook,
          * allow to get into the associated RunTimeError, Exception and
-         * FatalError states. 
+         * FatalError states.
          *
          * In the first case, updateHook() is still called, and recover() allows
          * you to go back into the Running state.  In the second case, the

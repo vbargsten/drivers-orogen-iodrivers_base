@@ -113,26 +113,24 @@ bool Task::startHook()
     return true;
 }
 
-bool Task::hasIO()
+bool Task::hasIO(bool first_time)
 {
-    if (mDriver->getFileDescriptor() == Driver::INVALID_FD)
+    if (mDriver->getFileDescriptor() == Driver::INVALID_FD) {
         return mStream->hasQueuedData();
-    else
-    {
-        RTT::extras::FileDescriptorActivity* fd_activity =
-            getActivity<RTT::extras::FileDescriptorActivity>();
-        if (fd_activity) {
-            return fd_activity->isUpdated(mDriver->getFileDescriptor());
-        }
-        else {
-            try {
-                mDriver->getMainStream()->waitRead(base::Time());
-                return true;
-            }
-            catch(iodrivers_base::TimeoutError const&) {
-                return false;
-            }
-        }
+    }
+
+    RTT::extras::FileDescriptorActivity* fd_activity =
+        getActivity<RTT::extras::FileDescriptorActivity>();
+    if (first_time && fd_activity) {
+        return fd_activity->isUpdated(mDriver->getFileDescriptor());
+    }
+
+    try {
+        mDriver->getMainStream()->waitRead(base::Time());
+        return true;
+    }
+    catch(iodrivers_base::TimeoutError const&) {
+        return false;
     }
 }
 
@@ -154,14 +152,13 @@ void Task::updateHook()
     if ((base::Time::now() - mLastStatus) > _io_status_interval.get())
         updateIOStatus();
 
-    if (hasIO())
-    {
-        bool first_time = true;
-        while (first_time || mDriver->hasPacket())
-        {
-            first_time = false;
+    bool first_time = true;
+    while (hasIO(first_time)) {
+        first_time = false;
+        do {
             processIO();
         }
+        while (mDriver->hasPacket());
     }
 }
 

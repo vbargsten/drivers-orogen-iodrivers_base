@@ -62,6 +62,17 @@ task_context "Proxy", subclasses: "Task" do
     fd_driven
 end
 
+# Test task used to verify the behavior of iodrivers_base::Task in a FDA
+# setting
+#
+# It will fail during execution if iodrivers_base::Task's implementation does
+# call processIO without any data on input
+task_context "test::FDTask", subclasses: "Task" do
+    output_port "rx", "/iodrivers_base/RawPacket"
+
+    fd_driven
+end
+
 # Test task used to verify the behavior of iodrivers_base::Task in a periodic
 # setting
 #
