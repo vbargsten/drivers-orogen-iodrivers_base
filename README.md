@@ -121,7 +121,7 @@ driver.
    and io_raw_out ports. The transfer of data between the ports and the Driver
    object is made by the iodrivers_base::Task class.
 
-Other properties control the behaviour of the system in both modes (read
+Other properties control the behavior of the system in both modes (read
 timeout) and write statistics about the I/O. Some properties are specific to one
 mode, in which case this is documented in the property documentation directly.
 
@@ -143,6 +143,7 @@ toplevel describe block:
 ~~~ ruby
 # frozen_string_literal: true
 
+using_task_library "iodrivers_base"
 require "iodrivers_base/orogen_test_helpers"
 using_task_library 'mydriver_project'
 
@@ -153,7 +154,7 @@ describe OroGen.mydriver_project.Task do
 end
 ~~~
 
-The general worflow is to:
+The general workflow is to:
 
 1. deploy the driver-under-test and save it as a `@task` instance variable
 2. call `setup_iodrivers_base_with_ports`. It returns a task whose `in` port allows
@@ -167,7 +168,7 @@ before do
     @task = syskit_deploy(
         OroGen.mydriver_project.Task.deployed_as("task_under_test")
     )
-    @raw_io = setup_iodrivers_base_with_ports
+    @raw_io = setup_iodrivers_base_with_ports @task
     syskit_configure_and_start(@task)
 end
 
