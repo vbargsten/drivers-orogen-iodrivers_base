@@ -21,7 +21,7 @@ module IODriversBase
         # Configure @task to use a file descriptor
         #
         # Internally, it creates a UDP socket and set the io_port property to connect to it
-        def setup_iodrivers_base_with_fd(task)
+        def setup_iodrivers_base_with_fd(task, io_port_name: :io_port)
             # We currently have no simple way to forward a file descriptor to
             # the component and have it use it. Randomly assign a port locally,
             # close the socket and ask the component to use it to reduce the
@@ -33,8 +33,9 @@ module IODriversBase
             remote_socket.close
 
             local_socket.connect "localhost", remote_port
+            task.properties[io_port_name]
+                .write("udp://localhost:#{local_port}:#{remote_port}")
 
-            task.properties.io_port = "udp://localhost:#{local_port}:#{remote_port}"
             local_socket
         end
 
