@@ -205,4 +205,32 @@ describe OroGen.iodrivers_base.Task do
             end
         end
     end
+
+    it "calls waitRead unconditionally to verify if there is something to process" do
+        # This is how it works:
+        # - when a UDP writer (here, the component) tries to write to a non-existing
+        #   port, the remote side may send an ICMP message to indicate that the
+        #   port does not exist. This generates a ECONNREFUSED error
+        # - the error is received on the read side of the link (since there is no
+        #   handshake in UDP, sendmsg could not possibly wait for the error)
+        # - in iodrivers_base, the UDP stream handles this in waitRead, because
+        #   we don't want to be woken up if ignore_connrefused is set.
+        # - in the component, we had to change the implementation of hasIO to do
+        #   the same. This is what this test triggers and tests.
+        subject_task = syskit_deploy(
+            OroGen.iodrivers_base.test.UDPErrorHandlingTask
+                  .deployed_as("#{Process.pid}-#{name}")
+        )
+        local_socket = setup_iodrivers_base_with_fd(subject_task)
+        local_socket.close
+        subject_task.properties.io_wait_timeout = Time.at(4)
+        subject_task.properties.io_port =
+            "#{subject_task.properties.io_port}&connected=1&ignore_connrefused=1"
+        syskit_configure_and_start(subject_task)
+
+        # would emit a plain exception_event if readPacket had thrown
+        packet = Types.iodrivers_base.RawPacket.new(data: [0, 1, 2, 3])
+        expect_execution { syskit_write subject_task.tx_port, packet }
+            .to { emit subject_task.io_timeout_event }
+    end
 end

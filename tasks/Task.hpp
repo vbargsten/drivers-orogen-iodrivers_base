@@ -101,12 +101,8 @@ namespace iodrivers_base {
         void pushAllData();
 
         /** Returns true if there is some I/O available to read on the driver
-         *
-         * @param first_time whether this is the first time hasIO was called within
-         *    updateHook, or a subsequent one. This adds a small optimization in the
-         *    comm FileDescriptorActivity case
          */
-        bool hasIO(bool first_time = true);
+        bool hasIO();
 
         /** Called back by the updateHook in case we have not received any data
          * for the duration of io_wait_timeout

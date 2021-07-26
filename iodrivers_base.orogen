@@ -92,6 +92,16 @@ task_context "test::FDTask", subclasses: "Task" do
     fd_driven
 end
 
+# Test task used to check a corner case behavior related to UDP error handling
+#
+# See the commit message and the test in iodrivers_base_test.rb for explanations
+task_context "test::UDPErrorHandlingTask", subclasses: "iodrivers_base::test::FDTask" do
+    input_port "tx", "/iodrivers_base/RawPacket"
+
+    port_driven
+    fd_driven
+end
+
 # Test task used to verify the behavior of iodrivers_base::Task in a periodic
 # setting
 #
