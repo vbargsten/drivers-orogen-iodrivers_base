@@ -77,6 +77,8 @@ bool Task::configureHook()
     if (! TaskBase::configureHook())
         return false;
 
+    mIOWaitTimeout = _io_wait_timeout.get();
+
     if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
         if (_io_raw_in.connected())
@@ -87,7 +89,13 @@ bool Task::configureHook()
         if (fd_activity)
         {
             fd_activity->watch(mDriver->getFileDescriptor());
-            fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
+
+            if (mIOWaitTimeout.isNull()) {
+                fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
+            }
+            else {
+                fd_activity->setTimeout(mIOWaitTimeout.toMilliseconds() / 10);
+            }
         }
     }
     else if (_io_raw_in.connected())
@@ -110,6 +118,13 @@ bool Task::startHook()
         return false;
 
     mLastStatus = base::Time::now();
+
+    if (mIOWaitTimeout.isNull()) {
+        mIOWaitDeadline = base::Time();
+    }
+    else {
+        mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
+    }
     return true;
 }
 
@@ -156,10 +171,23 @@ void Task::updateHook()
     while (hasIO(first_time)) {
         first_time = false;
         do {
+            if (!mIOWaitDeadline.isNull()) {
+                mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
+            }
             processIO();
         }
         while (mDriver->hasPacket());
     }
+
+    if (!mIOWaitDeadline.isNull() && base::Time::now() > mIOWaitDeadline) {
+        processIOTimeout();
+    }
+}
+
+void Task::processIOTimeout()
+{
+    updateIOStatus();
+    exception(IO_TIMEOUT);
 }
 
 void Task::updateIOStatus()

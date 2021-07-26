@@ -77,6 +77,9 @@ namespace iodrivers_base {
         RawPacket mRawPacket;
         base::Time mLastStatus;
 
+        base::Time mIOWaitTimeout;
+        base::Time mIOWaitDeadline;
+
         /** Sets the driver object
          *
          * Must be called before either the TaskBase::startHook method gets
@@ -104,6 +107,13 @@ namespace iodrivers_base {
          *    comm FileDescriptorActivity case
          */
         bool hasIO(bool first_time = true);
+
+        /** Called back by the updateHook in case we have not received any data
+         * for the duration of io_wait_timeout
+         *
+         * The default implementation transitions to IO_TIMEOUT
+         */
+        virtual void processIOTimeout();
 
         /** Called back by the updateHook. It must be reimplemented to process
          * all packets that are currently queued in the driver

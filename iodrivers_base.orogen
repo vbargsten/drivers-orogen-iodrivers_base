@@ -21,6 +21,18 @@ task_context "Task" do
     # udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if
     # you mean to use the io_raw_in and io_raw_out ports.
     property "io_port", "/std/string"
+    # The timeout waiting for new I/O
+    #
+    # The component will transition to the IO_TIMEOUT exception if no data at
+    # all is received for this long. The default is zero, which disables the
+    # feature.
+    #
+    # Note that the ability to time out this way depends on the type of activity
+    # used. The period of a periodic activity would essentially define the
+    # resolution of the actual timeout. If the component is deployed on a
+    # FileDescriptorActivity, it will be configured to timeout for 1/10 of this
+    # time, to give sufficient resolution.
+    property "io_wait_timeout", "/base/Time"
     # The timeout on write. Defaults to one second. Used only in direct I/O mode
     property "io_write_timeout", "/base/Time"
     # The timeout on read. Defaults to one second
