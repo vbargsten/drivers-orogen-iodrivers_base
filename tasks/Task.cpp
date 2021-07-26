@@ -5,6 +5,8 @@
 #include <rtt/extras/FileDescriptorActivity.hpp>
 #include "PortStream.hpp"
 
+#include <base-logging/Logging.hpp>
+
 using namespace iodrivers_base;
 
 
@@ -174,7 +176,21 @@ void Task::updateHook()
             if (!mIOWaitDeadline.isNull()) {
                 mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
             }
-            processIO();
+            try {
+                processIO();
+            }
+            catch(iodrivers_base::TimeoutError& e) {
+                if (!_handle_iodrivers_base_timeout.get()) {
+                    throw;
+                }
+
+                LOG_ERROR_S
+                    << "Received TimeoutError exception from processIO(), "
+                    << "transitioning to IO_TIMEOUT: "
+                    << e.what();
+                exception(IO_TIMEOUT);
+                return;
+            }
         }
         while (mDriver->hasPacket());
     }

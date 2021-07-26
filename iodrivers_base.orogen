@@ -5,6 +5,7 @@ name "iodrivers_base"
 # version "0.1"
 
 using_library "iodrivers_base", typekit_link: false
+using_library "base-logging", typekit_link: false
 import_types_from "base"
 import_types_from "iodrivers_base/Status.hpp"
 import_types_from "RawPacket.hpp"
@@ -40,6 +41,12 @@ task_context "Task" do
     # The interval at which the status port should be written. Defaults to one
     # second
     property "io_status_interval", "/base/Time"
+    # Whether iodrivers_base's TimeoutError exception should automatically be
+    # caught and interpreted as a IO_TIMEOUT exception when thrown from
+    # processIO
+    #
+    # This is false for historical reasons. We recommend setting it to true
+    property "handle_iodrivers_base_timeout", "/bool", false
 
     # If connected, data will be received through this port instead of using a
     # file descriptor

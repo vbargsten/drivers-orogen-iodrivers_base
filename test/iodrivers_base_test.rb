@@ -69,6 +69,33 @@ describe OroGen.iodrivers_base.Task do
         end
     end
 
+    describe "the handling of iodrivers_base::TimeoutError" do
+        before do
+            @subject_task = syskit_deploy(
+                OroGen.iodrivers_base.test.FDTask
+                    .deployed_as("#{Process.pid}-#{name}")
+            )
+            @subject_task.properties.io_read_timeout = Time.at(0.1)
+            @local_socket = setup_iodrivers_base_with_fd(@subject_task)
+        end
+
+        it "lets RTT handle the exception by default" do
+            syskit_configure_and_start(@subject_task)
+            expect_execution { @local_socket.write("\x1\x2\x3") }
+                .to do
+                    emit subject_task.exception_event
+                    not_emit subject_task.io_timeout_event
+                end
+        end
+
+        it "transitions to IO_TIMEOUT on iodrivers_base::TimeoutError if configured" do
+            @subject_task.properties.handle_iodrivers_base_timeout = true
+            syskit_configure_and_start(@subject_task)
+            expect_execution { @local_socket.write("\x1\x2\x3") }
+                .to { emit subject_task.io_timeout_event }
+        end
+    end
+
     describe "the behavior on non FD-driven activities" do
         before do
             @subject_task = syskit_deploy(
