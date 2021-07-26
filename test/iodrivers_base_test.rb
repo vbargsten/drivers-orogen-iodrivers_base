@@ -96,6 +96,22 @@ describe OroGen.iodrivers_base.Task do
         end
     end
 
+    it "does not go into an infinite loop if processIO returns early "\
+       "after transitioning to an exception state" do
+        subject_task = syskit_deploy(
+            OroGen.iodrivers_base.test.ExceptionInProcessIOTask
+                  .deployed_as("#{Process.pid}-#{name}")
+        )
+        subject_task.properties.io_read_timeout = Time.at(0.1)
+        local_socket = setup_iodrivers_base_with_fd(subject_task)
+        syskit_configure_and_start(subject_task)
+        expect_execution { local_socket.write("\x1\x2\x3\x4") }
+            .to do
+                not_emit subject_task.io_timeout_event
+                emit subject_task.exception_event
+            end
+    end
+
     describe "the behavior on non FD-driven activities" do
         before do
             @subject_task = syskit_deploy(

@@ -191,6 +191,11 @@ void Task::updateHook()
                 exception(IO_TIMEOUT);
                 return;
             }
+
+            if (getTaskState() != TaskCore::Running) {
+                // processIO transitioned to a stop state
+                return;
+            }
         }
         while (mDriver->hasPacket());
     }
