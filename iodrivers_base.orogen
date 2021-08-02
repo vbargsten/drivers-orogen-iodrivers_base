@@ -5,6 +5,7 @@ name "iodrivers_base"
 # version "0.1"
 
 using_library "iodrivers_base", typekit_link: false
+using_library "base-logging", typekit_link: false
 import_types_from "base"
 import_types_from "iodrivers_base/Status.hpp"
 import_types_from "RawPacket.hpp"
@@ -21,6 +22,18 @@ task_context "Task" do
     # udp://IP_OR_HOSTNAME[:PORT] or tcp://IP_OR_HOSTNAME[:PORT]. Leave empty if
     # you mean to use the io_raw_in and io_raw_out ports.
     property "io_port", "/std/string"
+    # The timeout waiting for new I/O
+    #
+    # The component will transition to the IO_TIMEOUT exception if no data at
+    # all is received for this long. The default is zero, which disables the
+    # feature.
+    #
+    # Note that the ability to time out this way depends on the type of activity
+    # used. The period of a periodic activity would essentially define the
+    # resolution of the actual timeout. If the component is deployed on a
+    # FileDescriptorActivity, it will be configured to timeout for 1/10 of this
+    # time, to give sufficient resolution.
+    property "io_wait_timeout", "/base/Time"
     # The timeout on write. Defaults to one second. Used only in direct I/O mode
     property "io_write_timeout", "/base/Time"
     # The timeout on read. Defaults to one second
@@ -28,6 +41,12 @@ task_context "Task" do
     # The interval at which the status port should be written. Defaults to one
     # second
     property "io_status_interval", "/base/Time"
+    # Whether iodrivers_base's TimeoutError exception should automatically be
+    # caught and interpreted as a IO_TIMEOUT exception when thrown from
+    # processIO
+    #
+    # This is false for historical reasons. We recommend setting it to true
+    property "handle_iodrivers_base_timeout", "/bool", false
 
     # If connected, data will be received through this port instead of using a
     # file descriptor
@@ -73,6 +92,16 @@ task_context "test::FDTask", subclasses: "Task" do
     fd_driven
 end
 
+# Test task used to check a corner case behavior related to UDP error handling
+#
+# See the commit message and the test in iodrivers_base_test.rb for explanations
+task_context "test::UDPErrorHandlingTask", subclasses: "iodrivers_base::test::FDTask" do
+    input_port "tx", "/iodrivers_base/RawPacket"
+
+    port_driven
+    fd_driven
+end
+
 # Test task used to verify the behavior of iodrivers_base::Task in a periodic
 # setting
 #
@@ -82,4 +111,11 @@ task_context "test::PeriodicTask", subclasses: "Task" do
     output_port "rx", "/iodrivers_base/RawPacket"
 
     periodic 0.1
+end
+
+# Test task that transitions to exception() from within processIO
+#
+# It is used to verify that this does not lead to an infinite loop if the
+# I/O is left in the driver
+task_context "test::ExceptionInProcessIOTask", subclasses: "iodrivers_base::test::PeriodicTask" do
 end

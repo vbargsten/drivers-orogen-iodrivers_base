@@ -34,7 +34,7 @@ module IODriversBase
 
             local_socket.connect "localhost", remote_port
             task.properties[io_port_name]
-                .write("udp://localhost:#{local_port}:#{remote_port}")
+                .write("udp://localhost:#{local_port}?local_port=#{remote_port}")
 
             local_socket
         end

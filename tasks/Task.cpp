@@ -5,6 +5,8 @@
 #include <rtt/extras/FileDescriptorActivity.hpp>
 #include "PortStream.hpp"
 
+#include <base-logging/Logging.hpp>
+
 using namespace iodrivers_base;
 
 
@@ -77,6 +79,8 @@ bool Task::configureHook()
     if (! TaskBase::configureHook())
         return false;
 
+    mIOWaitTimeout = _io_wait_timeout.get();
+
     if (mDriver->getFileDescriptor() != Driver::INVALID_FD)
     {
         if (_io_raw_in.connected())
@@ -87,7 +91,13 @@ bool Task::configureHook()
         if (fd_activity)
         {
             fd_activity->watch(mDriver->getFileDescriptor());
-            fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
+
+            if (mIOWaitTimeout.isNull()) {
+                fd_activity->setTimeout(_io_read_timeout.get().toMilliseconds());
+            }
+            else {
+                fd_activity->setTimeout(mIOWaitTimeout.toMilliseconds() / 10);
+            }
         }
     }
     else if (_io_raw_in.connected())
@@ -110,19 +120,20 @@ bool Task::startHook()
         return false;
 
     mLastStatus = base::Time::now();
+
+    if (mIOWaitTimeout.isNull()) {
+        mIOWaitDeadline = base::Time();
+    }
+    else {
+        mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
+    }
     return true;
 }
 
-bool Task::hasIO(bool first_time)
+bool Task::hasIO()
 {
     if (mDriver->getFileDescriptor() == Driver::INVALID_FD) {
         return mStream->hasQueuedData();
-    }
-
-    RTT::extras::FileDescriptorActivity* fd_activity =
-        getActivity<RTT::extras::FileDescriptorActivity>();
-    if (first_time && fd_activity) {
-        return fd_activity->isUpdated(mDriver->getFileDescriptor());
     }
 
     try {
@@ -152,14 +163,44 @@ void Task::updateHook()
     if ((base::Time::now() - mLastStatus) > _io_status_interval.get())
         updateIOStatus();
 
-    bool first_time = true;
-    while (hasIO(first_time)) {
-        first_time = false;
+    while (hasIO()) {
         do {
-            processIO();
+            if (!mIOWaitDeadline.isNull()) {
+                mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
+            }
+            try {
+                processIO();
+            }
+            catch(iodrivers_base::TimeoutError& e) {
+                if (!_handle_iodrivers_base_timeout.get()) {
+                    throw;
+                }
+
+                LOG_ERROR_S
+                    << "Received TimeoutError exception from processIO(), "
+                    << "transitioning to IO_TIMEOUT: "
+                    << e.what();
+                exception(IO_TIMEOUT);
+                return;
+            }
+
+            if (getTaskState() != TaskCore::Running) {
+                // processIO transitioned to a stop state
+                return;
+            }
         }
         while (mDriver->hasPacket());
     }
+
+    if (!mIOWaitDeadline.isNull() && base::Time::now() > mIOWaitDeadline) {
+        processIOTimeout();
+    }
+}
+
+void Task::processIOTimeout()
+{
+    updateIOStatus();
+    exception(IO_TIMEOUT);
 }
 
 void Task::updateIOStatus()
