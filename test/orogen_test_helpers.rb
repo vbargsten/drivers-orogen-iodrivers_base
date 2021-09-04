@@ -101,5 +101,27 @@ module IODriversBase
         def raw_packet_to_s(packet)
             packet.data.to_byte_array[8..-1]
         end
+
+        # Read data from a I/O but automatically timing out
+        def read_with_timeout(io, size, timeout: 10)
+            deadline = Time.now + timeout
+            buffer = "".dup
+
+            while buffer.size != size
+                begin
+                    buffer.concat(io.read_nonblock(size - buffer.size))
+                rescue IO::WaitReadable
+                    remaining = deadline - Time.now
+                    if remaining < 0
+                        flunk("failed to read #{size} bytes from #{io} in #{timeout}s. "\
+                              "Only got #{buffer.size} so far")
+                    end
+
+                    select([io], [], [], remaining)
+                end
+            end
+
+            buffer
+        end
     end
 end
