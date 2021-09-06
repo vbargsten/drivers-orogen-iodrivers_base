@@ -32,9 +32,9 @@ module IODriversBase
             @__iodrivers_base_sockets << local_socket
             remote_socket.close
 
-            local_socket.connect "localhost", remote_port
+            local_socket.connect "127.0.0.1", remote_port
             task.properties[io_port_name]
-                .write("udp://localhost:#{local_port}?local_port=#{remote_port}")
+                .write("udp://127.0.0.1:#{local_port}?local_port=#{remote_port}")
 
             local_socket
         end
@@ -80,7 +80,7 @@ module IODriversBase
         # @return [UDPSocket, Integer]
         def create_udp_socket
             socket = UDPSocket.new
-            socket.bind("localhost", 0)
+            socket.bind("127.0.0.1", 0)
             [socket, socket.local_address.ip_port]
         end
 
