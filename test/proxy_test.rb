@@ -32,7 +32,7 @@ describe OroGen.iodrivers_base.Proxy do
 
         it "forwards the data received on tx to the FD" do
             syskit_write @subject_task.tx_port, raw_packet_from_s("\x1\x2\x3\x4")
-            assert_equal "\x1\x2\x3\x4", @local_socket.read(4)
+            assert_equal "\x1\x2\x3\x4", read_with_timeout(@local_socket, 4)
         end
     end
 
