@@ -163,7 +163,7 @@ void Task::updateHook()
     if ((base::Time::now() - mLastStatus) > _io_status_interval.get())
         updateIOStatus();
 
-    while (hasIO()) {
+    while (getDriver()->getMainStream()->m_silent_timeout || hasIO()) {
         do {
             if (!mIOWaitDeadline.isNull()) {
                 mIOWaitDeadline = base::Time::now() + mIOWaitTimeout;
@@ -190,6 +190,9 @@ void Task::updateHook()
             }
         }
         while (mDriver->hasPacket());
+        
+        if (getDriver()->getMainStream()->m_silent_timeout)
+            break;
     }
 
     if (!mIOWaitDeadline.isNull() && base::Time::now() > mIOWaitDeadline) {
