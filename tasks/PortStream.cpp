@@ -14,10 +14,10 @@ bool PortStream::hasQueuedData()
         return true;
 }
 
-void PortStream::waitRead(base::Time const& timeout)
+bool PortStream::waitRead(base::Time const& timeout)
 {
     if (!mPacketRead.data.empty())
-        return;
+        return true;
 
     uint64_t sleep_time;
     int count;
@@ -36,14 +36,14 @@ void PortStream::waitRead(base::Time const& timeout)
     for (int i = 0; i < count; ++i)
     {
         if (mIn.read(mPacketRead, false) == RTT::NewData)
-            return;
+            return true;
         usleep(sleep_time);
     }
-    throw TimeoutError(TimeoutError::NONE, "waitRead(): timeout");
+    return false;
 }
-void PortStream::waitWrite(base::Time const& timeout)
+bool PortStream::waitWrite(base::Time const& timeout)
 {
-    return;
+    return true;
 }
 size_t PortStream::read(uint8_t* buffer, size_t buffer_size)
 {

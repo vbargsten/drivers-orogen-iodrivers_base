@@ -22,8 +22,8 @@ public:
             RTT::OutputPort<RawPacket>& out);
 
     bool hasQueuedData();
-    void waitRead(base::Time const& timeout);
-    void waitWrite(base::Time const& timeout);
+    bool waitRead(base::Time const& timeout);
+    bool waitWrite(base::Time const& timeout);
     size_t read(uint8_t* buffer, size_t buffer_size);
     size_t write(uint8_t const* buffer, size_t buffer_size);
     void clear();

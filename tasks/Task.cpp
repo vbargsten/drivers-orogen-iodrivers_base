@@ -136,13 +136,7 @@ bool Task::hasIO()
         return mStream->hasQueuedData();
     }
 
-    try {
-        mDriver->getMainStream()->waitRead(base::Time());
-        return true;
-    }
-    catch(iodrivers_base::TimeoutError const&) {
-        return false;
-    }
+    return mDriver->getMainStream()->hasIO();
 }
 
 void Task::updateHook()
